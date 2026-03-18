@@ -39,11 +39,11 @@
 
 <div class="card">
   <button class="login" onclick="login()">Login with Google</button>
-  <h3 id="user">Loading...</h3>
+  <h3 id="user">Not logged in</h3>
 </div>
 
 <div class="card">
-  <h3 id="status">Loading...</h3>
+  <h3 id="status">Not logged in</h3>
 </div>
 
 <div class="card">
@@ -65,50 +65,41 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-// 🔥 KEEP SESSION
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-// LOGIN
+// 🔥 LOGIN (POPUP ONLY)
 function login() {
-  auth.signInWithRedirect(provider);
+  auth.signInWithPopup(provider)
+    .then((result) => {
+      const user = result.user;
+
+      document.getElementById("user").innerText = user.email;
+      document.getElementById("status").innerText = "Free Plan";
+
+      localStorage.setItem("user", user.email);
+      window.currentUser = true;
+    })
+    .catch((error) => {
+      alert("Login failed: " + error.message);
+    });
 }
 
-// 🔥 ALWAYS SYNC LOGIN (MAIN FIX)
-auth.onAuthStateChanged(function(user) {
-  if (user) {
-    // Save in localStorage also
-    localStorage.setItem("user", user.email);
+// 🔥 RESTORE SESSION (MAIN FIX)
+window.onload = function() {
+  const savedUser = localStorage.getItem("user");
 
-    document.getElementById("user").innerText = user.email;
+  if (savedUser) {
+    document.getElementById("user").innerText = savedUser;
     document.getElementById("status").innerText = "Free Plan";
-
     window.currentUser = true;
-  } else {
-    // Check backup (localStorage)
-    const savedUser = localStorage.getItem("user");
-
-    if (savedUser) {
-      document.getElementById("user").innerText = savedUser;
-      document.getElementById("status").innerText = "Free Plan";
-      window.currentUser = true;
-    } else {
-      document.getElementById("user").innerText = "Not logged in";
-      document.getElementById("status").innerText = "Not logged in";
-      window.currentUser = false;
-    }
   }
-});
+};
 
-// HANDLE REDIRECT (important but simple)
-auth.getRedirectResult().catch(() => {});
-
-// PAYMENT
+// 💳 PAYMENT
 function buy(link) {
   if (!window.currentUser) {
     alert("Please login first ⚠️");
     return;
   }
-  window.location.href = link;
+  window.open(link, "_blank");
 }
 </script>
 
