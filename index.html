@@ -3,7 +3,6 @@
 <head>
   <title>FuturePath 🚀</title>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
@@ -15,14 +14,12 @@
       text-align:center;
       padding:20px;
     }
-
     .card {
       background:#1e293b;
       padding:20px;
       margin:15px;
       border-radius:12px;
     }
-
     button {
       padding:12px 22px;
       border:none;
@@ -31,7 +28,6 @@
       font-size:16px;
       cursor:pointer;
     }
-
     .login { background:#4285F4; color:white; }
     .plan { background:orange; color:black; }
   </style>
@@ -69,42 +65,53 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-// 🔥 FORCE SESSION PERSISTENCE
+// 🔥 IMPORTANT: KEEP USER LOGGED IN
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-// LOGIN
+// ✅ FIXED LOGIN (POPUP FIRST → REDIRECT FALLBACK)
 function login() {
-  auth.signInWithRedirect(provider);
+  auth.signInWithPopup(provider)
+    .then(result => {
+      updateUI(result.user);
+    })
+    .catch(error => {
+      // fallback (mobile sometimes blocks popup)
+      auth.signInWithRedirect(provider);
+    });
 }
 
-// 🔥 WAIT FOR AUTH PROPERLY
+// ✅ UI UPDATE FUNCTION
+function updateUI(user) {
+  document.getElementById("user").innerText = user.email;
+  document.getElementById("status").innerText = "Free Plan";
+  window.currentUser = true;
+}
+
+// ✅ AUTH STATE LISTENER (MAIN FIX)
 auth.onAuthStateChanged(function(user) {
-  setTimeout(() => {
-    if (user) {
-      document.getElementById("user").innerText = user.email;
-      document.getElementById("status").innerText = "Free Plan";
-      window.currentUser = true;
-    } else {
-      document.getElementById("user").innerText = "Not logged in";
-      document.getElementById("status").innerText = "Not logged in";
-      window.currentUser = false;
-    }
-  }, 500); // small delay fixes GitHub issue
+  if (user) {
+    updateUI(user);
+  } else {
+    document.getElementById("user").innerText = "Not logged in";
+    document.getElementById("status").innerText = "Not logged in";
+    window.currentUser = false;
+  }
 });
 
-// HANDLE REDIRECT
-auth.getRedirectResult().catch(function(error) {
-  console.log(error);
-});
+// ✅ HANDLE REDIRECT RESULT (CRITICAL FIX)
+auth.getRedirectResult().then((result) => {
+  if (result.user) {
+    updateUI(result.user);
+  }
+}).catch(() => {});
 
-// PAYMENT
+// 💳 PAYMENT
 function buy(link) {
   if (!window.currentUser) {
     alert("Please login first ⚠️");
     return;
   }
-
-  window.location.href = link;
+  window.open(link, "_blank"); // FIXED (mobile compatible)
 }
 </script>
 
