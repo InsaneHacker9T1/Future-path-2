@@ -34,81 +34,78 @@
 
     .login { background:#4285F4; color:white; }
     .plan { background:orange; color:black; }
-    .paid { background:green; color:white; }
   </style>
 </head>
 
 <body>
 
-  <h1>FuturePath 🚀</h1>
+<h1>FuturePath 🚀</h1>
 
-  <div class="card">
-    <button class="login" id="loginBtn">Login with Google</button>
-    <h3 id="user">Checking...</h3>
-  </div>
+<div class="card">
+  <button class="login" onclick="login()">Login with Google</button>
+  <h3 id="user">Checking...</h3>
+</div>
 
-  <div class="card">
-    <h3 id="status">Checking...</h3>
-  </div>
+<div class="card">
+  <h3 id="status">Checking...</h3>
+</div>
 
-  <div class="card">
-    <h3>Upgrade Plans 💰</h3>
-    <button class="plan" id="b29">₹29 Basic</button>
-    <button class="plan" id="b99">₹99 Pro</button>
-    <button class="plan" id="b149">₹149 Premium</button>
-  </div>
+<div class="card">
+  <h3>Upgrade Plans 💰</h3>
+  <button class="plan" onclick="buy('https://rzp.io/rzp/FKHtKbmY')">₹29 Basic</button>
+  <button class="plan" onclick="buy('https://rzp.io/rzp/62kni95')">₹99 Pro</button>
+  <button class="plan" onclick="buy('https://rzp.io/rzp/pCtzA6rZ')">₹149 Premium</button>
+</div>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAgggiNrjZw2G8ncfM9LTfr08_edEhkSJw",
-    authDomain: "futurepath-c6e04.firebaseapp.com",
-    projectId: "futurepath-c6e04",
-    storageBucket: "futurepath-c6e04.firebasestorage.app",
-    messagingSenderId: "1008950672642",
-    appId: "1:1008950672642:web:0bb14abe99c19f19dbd61b"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyAgggiNrjZw2G8ncfM9LTfr08_edEhkSJw",
+  authDomain: "futurepath-c6e04.firebaseapp.com",
+  projectId: "futurepath-c6e04"
+};
 
-  firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 
-  const provider = new firebase.auth.GoogleAuthProvider();
+const auth = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
 
-  // 🔥 FORCE SESSION PERSISTENCE (IMPORTANT FIX)
-  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+// 🔥 FORCE SESSION PERSISTENCE
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-  // LOGIN BUTTON
-  document.getElementById("loginBtn").onclick = function () {
-    firebase.auth().signInWithRedirect(provider);
-  };
+// LOGIN
+function login() {
+  auth.signInWithRedirect(provider);
+}
 
-  // 🔥 FIX LOGIN STATE (MAIN FIX)
-  firebase.auth().onAuthStateChanged((user) => {
+// 🔥 WAIT FOR AUTH PROPERLY
+auth.onAuthStateChanged(function(user) {
+  setTimeout(() => {
     if (user) {
       document.getElementById("user").innerText = user.email;
       document.getElementById("status").innerText = "Free Plan";
-      window.currentUser = user;
+      window.currentUser = true;
     } else {
       document.getElementById("user").innerText = "Not logged in";
       document.getElementById("status").innerText = "Not logged in";
-      window.currentUser = null;
+      window.currentUser = false;
     }
-  });
+  }, 500); // small delay fixes GitHub issue
+});
 
-  // 🔥 PAYMENT BUTTON FIX (EVENT LISTENER METHOD)
-  document.getElementById("b29").onclick = () => pay("https://rzp.io/rzp/FKHtKbmY");
-  document.getElementById("b99").onclick = () => pay("https://rzp.io/rzp/62kni95");
-  document.getElementById("b149").onclick = () => pay("https://rzp.io/rzp/pCtzA6rZ");
+// HANDLE REDIRECT
+auth.getRedirectResult().catch(function(error) {
+  console.log(error);
+});
 
-  function pay(link) {
-    if (!window.currentUser) {
-      alert("Please login first ⚠️");
-      return;
-    }
-
-    window.location.href = link;
+// PAYMENT
+function buy(link) {
+  if (!window.currentUser) {
+    alert("Please login first ⚠️");
+    return;
   }
 
-  // DEBUG (optional)
-  firebase.auth().getRedirectResult().catch(err => console.log(err));
+  window.location.href = link;
+}
 </script>
 
 </body>
