@@ -6,7 +6,6 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
     body {
@@ -14,116 +13,116 @@
       color:white;
       font-family:Arial;
       text-align:center;
-      padding:30px;
+      padding:20px;
     }
 
     .card {
       background:#1e293b;
       padding:20px;
+      margin:15px;
       border-radius:12px;
-      margin-top:20px;
     }
 
     button {
-      padding:12px 18px;
-      margin:8px;
+      padding:10px 20px;
       border:none;
       border-radius:8px;
-      cursor:pointer;
-      font-size:14px;
+      margin:5px;
+      font-size:16px;
     }
 
-    .login { background:#4285F4; color:white; }
-    .buy { background:orange; }
+    .login {
+      background:#4285F4;
+      color:white;
+    }
+
+    .plan {
+      background:orange;
+      color:black;
+    }
+
+    .paid {
+      background:green;
+      color:white;
+    }
   </style>
 </head>
 
 <body>
 
-<h1>FuturePath 🚀</h1>
+  <h1>FuturePath 🚀</h1>
 
-<div class="card">
-  <button class="login" onclick="login()">Login with Google</button>
-  <h3 id="user">Not logged in</h3>
-</div>
+  <!-- LOGIN -->
+  <div class="card">
+    <button class="login" onclick="login()">Login with Google</button>
+    <h3 id="user">Not logged in</h3>
+  </div>
 
-<div class="card">
-  <h3 id="status">Loading...</h3>
-</div>
+  <!-- STATUS -->
+  <div class="card">
+    <h3 id="status">Loading...</h3>
+  </div>
 
-<div class="card">
-  <h3>Upgrade Plans 💰</h3>
-  <button class="buy" onclick="buy('basic')">₹29 Basic</button>
-  <button class="buy" onclick="buy('pro')">₹99 Pro</button>
-  <button class="buy" onclick="buy('premium')">₹149 Premium</button>
-</div>
+  <!-- PLANS -->
+  <div class="card">
+    <h3>Upgrade Plans 💰</h3>
+    <button class="plan">₹29 Basic</button>
+    <button class="plan">₹99 Pro</button>
+    <button class="plan">₹149 Premium</button>
+  </div>
+
+  <!-- TEMP BUTTON -->
+  <div class="card">
+    <button class="paid" onclick="fakePaid()">I Have Paid ✅</button>
+  </div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAgggiNrjZw2G8ncfM9LTfr08_edEhkSJ",
-  authDomain: "futurepath-c6e04.firebaseapp.com",
-  projectId: "futurepath-c6e04"
-};
+  // ✅ CORRECT FIREBASE CONFIG (NO DUPLICATE)
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgggiNrjZw2G8ncfM9LTfr08_edEhkSJw",
+    authDomain: "futurepath-c6e04.firebaseapp.com",
+    projectId: "futurepath-c6e04",
+    storageBucket: "futurepath-c6e04.firebasestorage.app",
+    messagingSenderId: "1008950672642",
+    appId: "1:1008950672642:web:0bb14abe99c19f19dbd61b",
+    measurementId: "G-5LQWMF51Q4"
+  };
 
-firebase.initializeApp(firebaseConfig);
+  firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-let userId = null;
-
-// 🔐 LOGIN (mobile friendly)
-function login() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider);
-}
 
-// 🔄 AFTER LOGIN
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    userId = user.uid;
-    document.getElementById("user").innerText = user.email;
+  // 🚀 LOGIN (MOBILE SAFE)
+  function login() {
+    firebase.auth().signInWithRedirect(provider);
+  }
 
-    const ref = db.collection("users").doc(userId);
-    const doc = await ref.get();
-
-    if (!doc.exists) {
-      await ref.set({
-        premium:false,
-        subscription:"free"
-      });
+  // 🔁 HANDLE REDIRECT RESULT
+  firebase.auth().getRedirectResult()
+  .then((result) => {
+    if (result.user) {
+      document.getElementById("user").innerText = result.user.email;
+      document.getElementById("status").innerText = "Free Plan";
     }
+  })
+  .catch((error) => {
+    console.log(error);
+  });
 
-    load();
-  }
-});
+  // 🔁 AUTO LOGIN STATE
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      document.getElementById("user").innerText = user.email;
+      document.getElementById("status").innerText = "Free Plan";
+    } else {
+      document.getElementById("status").innerText = "Not logged in";
+    }
+  });
 
-// 📊 LOAD USER DATA
-async function load() {
-  const doc = await db.collection("users").doc(userId).get();
-  const data = doc.data();
-
-  if (data.premium) {
-    document.getElementById("status").innerText =
-      "🚀 Premium Activated (" + data.subscription + ")";
-  } else {
-    document.getElementById("status").innerText =
-      "Free Plan 😐";
+  // ❌ TEMP (WILL REMOVE LATER)
+  function fakePaid() {
+    document.getElementById("status").innerText = "Premium Activated 🚀";
   }
-}
-
-// 💰 BUY
-function buy(plan) {
-  if (plan === "basic") {
-    window.open("https://rzp.io/rzp/FKHtKbmY");
-  }
-  if (plan === "pro") {
-    window.open("https://rzp.io/rzp/62kni95");
-  }
-  if (plan === "premium") {
-    window.open("https://rzp.io/rzp/pCtzA6rZ");
-  }
-}
 </script>
 
 </body>
