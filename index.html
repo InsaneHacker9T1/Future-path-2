@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FuturePath 🚀</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <style>
+    body {
+      background:#0f172a;
+      color:white;
+      font-family:Arial;
+      text-align:center;
+      padding:30px;
+    }
+
+    .card {
+      background:#1e293b;
+      padding:20px;
+      border-radius:12px;
+      margin-top:20px;
+    }
+
+    button {
+      padding:12px 18px;
+      margin:8px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:14px;
+    }
+
+    .login { background:#4285F4; color:white; }
+    .buy { background:orange; }
+  </style>
+</head>
+
+<body>
+
+<h1>FuturePath 🚀</h1>
+
+<div class="card">
+  <button class="login" onclick="login()">Login with Google</button>
+  <h3 id="user">Not logged in</h3>
+</div>
+
+<div class="card">
+  <h3 id="status">Loading...</h3>
+</div>
+
+<div class="card">
+  <h3>Upgrade Plans 💰</h3>
+  <button class="buy" onclick="buy('basic')">₹29 Basic</button>
+  <button class="buy" onclick="buy('pro')">₹99 Pro</button>
+  <button class="buy" onclick="buy('premium')">₹149 Premium</button>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAgggiNrjZw2G8ncfM9LTfr08_edEhkSJ",
+  authDomain: "futurepath-c6e04.firebaseapp.com",
+  projectId: "futurepath-c6e04"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let userId = null;
+
+// 🔐 LOGIN (mobile friendly)
+function login() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithRedirect(provider);
+}
+
+// 🔄 AFTER LOGIN
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    userId = user.uid;
+    document.getElementById("user").innerText = user.email;
+
+    const ref = db.collection("users").doc(userId);
+    const doc = await ref.get();
+
+    if (!doc.exists) {
+      await ref.set({
+        premium:false,
+        subscription:"free"
+      });
+    }
+
+    load();
+  }
+});
+
+// 📊 LOAD USER DATA
+async function load() {
+  const doc = await db.collection("users").doc(userId).get();
+  const data = doc.data();
+
+  if (data.premium) {
+    document.getElementById("status").innerText =
+      "🚀 Premium Activated (" + data.subscription + ")";
+  } else {
+    document.getElementById("status").innerText =
+      "Free Plan 😐";
+  }
+}
+
+// 💰 BUY
+function buy(plan) {
+  if (plan === "basic") {
+    window.open("https://rzp.io/rzp/FKHtKbmY");
+  }
+  if (plan === "pro") {
+    window.open("https://rzp.io/rzp/62kni95");
+  }
+  if (plan === "premium") {
+    window.open("https://rzp.io/rzp/pCtzA6rZ");
+  }
+}
+</script>
+
+</body>
+</html>
