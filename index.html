@@ -65,53 +65,44 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-// 🔥 IMPORTANT: KEEP USER LOGGED IN
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-// ✅ FIXED LOGIN (POPUP FIRST → REDIRECT FALLBACK)
+// 🔥 LOGIN
 function login() {
-  auth.signInWithPopup(provider)
-    .then(result => {
-      updateUI(result.user);
-    })
-    .catch(error => {
-      // fallback (mobile sometimes blocks popup)
-      auth.signInWithRedirect(provider);
-    });
+  auth.signInWithRedirect(provider);
 }
 
-// ✅ UI UPDATE FUNCTION
-function updateUI(user) {
-  document.getElementById("user").innerText = user.email;
-  document.getElementById("status").innerText = "Free Plan";
-  window.currentUser = true;
-}
+// 🔥 AFTER REDIRECT (MAIN FIX)
+auth.getRedirectResult().then((result) => {
+  if (result.user) {
+    localStorage.setItem("user", result.user.email); // SAVE LOGIN
+  }
+});
 
-// ✅ AUTH STATE LISTENER (MAIN FIX)
-auth.onAuthStateChanged(function(user) {
+// 🔥 FORCE UI UPDATE FROM LOCAL STORAGE
+function checkLogin() {
+  const user = localStorage.getItem("user");
+
   if (user) {
-    updateUI(user);
+    document.getElementById("user").innerText = user;
+    document.getElementById("status").innerText = "Free Plan";
+    window.currentUser = true;
   } else {
     document.getElementById("user").innerText = "Not logged in";
     document.getElementById("status").innerText = "Not logged in";
     window.currentUser = false;
   }
-});
+}
 
-// ✅ HANDLE REDIRECT RESULT (CRITICAL FIX)
-auth.getRedirectResult().then((result) => {
-  if (result.user) {
-    updateUI(result.user);
-  }
-}).catch(() => {});
+// RUN AFTER PAGE LOAD
+setTimeout(checkLogin, 1000);
 
-// 💳 PAYMENT
+// 💳 PAYMENT FIX
 function buy(link) {
   if (!window.currentUser) {
     alert("Please login first ⚠️");
     return;
   }
-  window.open(link, "_blank"); // FIXED (mobile compatible)
+
+  window.location.href = link;
 }
 </script>
 
