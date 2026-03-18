@@ -39,11 +39,11 @@
 
 <div class="card">
   <button class="login" onclick="login()">Login with Google</button>
-  <h3 id="user">Checking...</h3>
+  <h3 id="user">Loading...</h3>
 </div>
 
 <div class="card">
-  <h3 id="status">Checking...</h3>
+  <h3 id="status">Loading...</h3>
 </div>
 
 <div class="card">
@@ -65,43 +65,49 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-// 🔥 LOGIN
+// 🔥 KEEP SESSION
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+// LOGIN
 function login() {
   auth.signInWithRedirect(provider);
 }
 
-// 🔥 AFTER REDIRECT (MAIN FIX)
-auth.getRedirectResult().then((result) => {
-  if (result.user) {
-    localStorage.setItem("user", result.user.email); // SAVE LOGIN
+// 🔥 ALWAYS SYNC LOGIN (MAIN FIX)
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    // Save in localStorage also
+    localStorage.setItem("user", user.email);
+
+    document.getElementById("user").innerText = user.email;
+    document.getElementById("status").innerText = "Free Plan";
+
+    window.currentUser = true;
+  } else {
+    // Check backup (localStorage)
+    const savedUser = localStorage.getItem("user");
+
+    if (savedUser) {
+      document.getElementById("user").innerText = savedUser;
+      document.getElementById("status").innerText = "Free Plan";
+      window.currentUser = true;
+    } else {
+      document.getElementById("user").innerText = "Not logged in";
+      document.getElementById("status").innerText = "Not logged in";
+      window.currentUser = false;
+    }
   }
 });
 
-// 🔥 FORCE UI UPDATE FROM LOCAL STORAGE
-function checkLogin() {
-  const user = localStorage.getItem("user");
+// HANDLE REDIRECT (important but simple)
+auth.getRedirectResult().catch(() => {});
 
-  if (user) {
-    document.getElementById("user").innerText = user;
-    document.getElementById("status").innerText = "Free Plan";
-    window.currentUser = true;
-  } else {
-    document.getElementById("user").innerText = "Not logged in";
-    document.getElementById("status").innerText = "Not logged in";
-    window.currentUser = false;
-  }
-}
-
-// RUN AFTER PAGE LOAD
-setTimeout(checkLogin, 1000);
-
-// 💳 PAYMENT FIX
+// PAYMENT
 function buy(link) {
   if (!window.currentUser) {
     alert("Please login first ⚠️");
     return;
   }
-
   window.location.href = link;
 }
 </script>
