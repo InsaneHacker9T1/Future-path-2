@@ -3,8 +3,10 @@
 <head>
   <title>FuturePath 🚀</title>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
     body {
@@ -63,26 +65,52 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
+const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-// 🔥 LOGIN (POPUP ONLY)
+// 🔥 LOGIN
 function login() {
   auth.signInWithPopup(provider)
     .then((result) => {
-      const user = result.user;
-
-      document.getElementById("user").innerText = user.email;
-      document.getElementById("status").innerText = "Free Plan";
-
-      localStorage.setItem("user", user.email);
-      window.currentUser = true;
+      handleUser(result.user);
     })
     .catch((error) => {
       alert("Login failed: " + error.message);
     });
 }
 
-// 🔥 RESTORE SESSION (MAIN FIX)
+// 🔥 MAIN USER SYSTEM
+async function handleUser(user) {
+
+  const userRef = db.collection("users").doc(user.uid);
+  const doc = await userRef.get();
+
+  // Create user if not exists
+  if (!doc.exists) {
+    await userRef.set({
+      email: user.email,
+      premium: false,
+      createdAt: new Date()
+    });
+  }
+
+  // Get user data
+  const data = (await userRef.get()).data();
+
+  document.getElementById("user").innerText = user.email;
+
+  if (data.premium) {
+    document.getElementById("status").innerText = "Premium User 💎";
+  } else {
+    document.getElementById("status").innerText = "Free Plan";
+  }
+
+  // Save locally (backup)
+  localStorage.setItem("user", user.email);
+  window.currentUser = true;
+}
+
+// 🔥 RESTORE SESSION
 window.onload = function() {
   const savedUser = localStorage.getItem("user");
 
