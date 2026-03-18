@@ -24,11 +24,12 @@
     }
 
     button {
-      padding:10px 20px;
+      padding:12px 22px;
       border:none;
-      border-radius:8px;
-      margin:5px;
+      border-radius:10px;
+      margin:6px;
       font-size:16px;
+      cursor:pointer;
     }
 
     .login { background:#4285F4; color:white; }
@@ -41,28 +42,20 @@
 
   <h1>FuturePath 🚀</h1>
 
-  <!-- LOGIN -->
   <div class="card">
-    <button class="login" onclick="login()">Login with Google</button>
-    <h3 id="user">Not logged in</h3>
+    <button class="login" id="loginBtn">Login with Google</button>
+    <h3 id="user">Checking...</h3>
   </div>
 
-  <!-- STATUS -->
   <div class="card">
     <h3 id="status">Checking...</h3>
   </div>
 
-  <!-- PLANS -->
   <div class="card">
     <h3>Upgrade Plans 💰</h3>
-    <button class="plan" onclick="buy(29)">₹29 Basic</button>
-    <button class="plan" onclick="buy(99)">₹99 Pro</button>
-    <button class="plan" onclick="buy(149)">₹149 Premium</button>
-  </div>
-
-  <!-- TEMP BUTTON -->
-  <div class="card">
-    <button class="paid" onclick="fakePaid()">I Have Paid ✅</button>
+    <button class="plan" id="b29">₹29 Basic</button>
+    <button class="plan" id="b99">₹99 Pro</button>
+    <button class="plan" id="b149">₹149 Premium</button>
   </div>
 
 <script>
@@ -79,48 +72,43 @@
 
   const provider = new firebase.auth.GoogleAuthProvider();
 
-  // 🚀 LOGIN
-  function login() {
-    firebase.auth().signInWithRedirect(provider);
-  }
+  // 🔥 FORCE SESSION PERSISTENCE (IMPORTANT FIX)
+  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-  // ✅ LOGIN STATE FIX
+  // LOGIN BUTTON
+  document.getElementById("loginBtn").onclick = function () {
+    firebase.auth().signInWithRedirect(provider);
+  };
+
+  // 🔥 FIX LOGIN STATE (MAIN FIX)
   firebase.auth().onAuthStateChanged((user) => {
     if (user) {
       document.getElementById("user").innerText = user.email;
       document.getElementById("status").innerText = "Free Plan";
+      window.currentUser = user;
     } else {
       document.getElementById("user").innerText = "Not logged in";
       document.getElementById("status").innerText = "Not logged in";
+      window.currentUser = null;
     }
   });
 
-  // 💰 PAYMENT REDIRECT (YOUR LINKS ADDED)
-  function buy(amount) {
-    if (!firebase.auth().currentUser) {
+  // 🔥 PAYMENT BUTTON FIX (EVENT LISTENER METHOD)
+  document.getElementById("b29").onclick = () => pay("https://rzp.io/rzp/FKHtKbmY");
+  document.getElementById("b99").onclick = () => pay("https://rzp.io/rzp/62kni95");
+  document.getElementById("b149").onclick = () => pay("https://rzp.io/rzp/pCtzA6rZ");
+
+  function pay(link) {
+    if (!window.currentUser) {
       alert("Please login first ⚠️");
       return;
     }
 
-    let paymentLink = "";
-
-    if (amount == 29) {
-      paymentLink = "https://rzp.io/rzp/FKHtKbmY";
-    } 
-    else if (amount == 99) {
-      paymentLink = "https://rzp.io/rzp/62kni95";
-    } 
-    else if (amount == 149) {
-      paymentLink = "https://rzp.io/rzp/pCtzA6rZ";
-    }
-
-    window.location.href = paymentLink;
+    window.location.href = link;
   }
 
-  // ❌ TEMP (REMOVE LATER)
-  function fakePaid() {
-    document.getElementById("status").innerText = "Premium Activated 🚀";
-  }
+  // DEBUG (optional)
+  firebase.auth().getRedirectResult().catch(err => console.log(err));
 </script>
 
 </body>
